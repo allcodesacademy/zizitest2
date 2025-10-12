@@ -3,13 +3,13 @@ import { query } from '../config/database.js';
 export class Category {
   // Create a new category
   static async create(categoryData) {
-    const { name, description, parent_id, icon, slug } = categoryData;
-    
+    const { name, description, parent_id, icon, slug, allows_free_ads = true } = categoryData;
+
     const result = await query(
-      `INSERT INTO categories (name, description, parent_id, icon, slug, status)
-       VALUES ($1, $2, $3, $4, $5, 'active')
+      `INSERT INTO categories (name, description, parent_id, icon, slug, status, allows_free_ads)
+       VALUES ($1, $2, $3, $4, $5, 'active', $6)
        RETURNING *`,
-      [name, description, parent_id, icon, slug]
+      [name, description, parent_id, icon, slug, allows_free_ads]
     );
 
     return result.rows[0];

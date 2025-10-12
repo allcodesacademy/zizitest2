@@ -136,7 +136,7 @@ router.put('/cancel', protect, async (req, res) => {
 router.get('/can-post', protect, async (req, res) => {
   try {
     const result = await UserSubscription.canPostAd(req.user.id);
-    
+
     res.json({
       success: true,
       data: result
@@ -146,6 +146,29 @@ router.get('/can-post', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error'
+    });
+  }
+});
+
+// @desc    Check if user can post in specific category
+// @route   GET /api/subscriptions/can-post-in-category/:categoryId
+// @access  Private
+router.get('/can-post-in-category/:categoryId', protect, async (req, res) => {
+  try {
+    const result = await UserSubscription.canPostInCategory(
+      req.user.id,
+      req.params.categoryId
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Check can post in category error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
     });
   }
 });

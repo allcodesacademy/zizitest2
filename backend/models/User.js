@@ -223,6 +223,39 @@ export class User {
       [id]
     );
   }
+
+  // Check if user is in trial period
+  static async isInTrialPeriod(userId) {
+    const result = await query(
+      `SELECT trial_started_at, trial_expires_at FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (!result.rows[0]) return false;
+
+    const { trial_started_at, trial_expires_at } = result.rows[0];
+
+    if (!trial_started_at || !trial_expires_at) return false;
+
+    const now = new Date();
+    const expiresAt = new Date(trial_expires_at);
+
+    return now < expiresAt;
+  }
+
+  // Start trial period for user
+  static async startTrialPeriod(userId) {
+    const trialStartDate = new Date();
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+    await query(
+      `UPDATE users SET trial_started_at = $1, trial_expires_at = $2 WHERE id = $3`,
+      [trialStartDate, trialEndDate, userId]
+    );
+
+    return { trialStartDate, trialEndDate };
+  }
 }
 
 export default User;

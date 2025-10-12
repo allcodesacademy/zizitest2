@@ -25,7 +25,8 @@ const CategoryManagement = () => {
     description: '',
     parent_id: '',
     icon: '',
-    sort_order: 0
+    sort_order: 0,
+    allows_free_ads: true
   });
 
   const handleAddCategory = () => {
@@ -35,7 +36,8 @@ const CategoryManagement = () => {
       description: '',
       parent_id: '',
       icon: '',
-      sort_order: 0
+      sort_order: 0,
+      allows_free_ads: true
     });
     setShowModal(true);
   };
@@ -47,7 +49,8 @@ const CategoryManagement = () => {
       description: category.description || '',
       parent_id: category.parent_id?.toString() || '',
       icon: category.icon || '',
-      sort_order: category.sort_order || 0
+      sort_order: category.sort_order || 0,
+      allows_free_ads: category.allows_free_ads !== undefined ? category.allows_free_ads : true
     });
     setShowModal(true);
   };
@@ -115,7 +118,14 @@ const CategoryManagement = () => {
                 )}
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">{category.name}</h3>
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-medium text-gray-900">{category.name}</h3>
+                  {category.allows_free_ads === false && (
+                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                      Subscription Required
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600">{category.description}</p>
                 <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
                   <span>{category.ad_count || 0} ads</span>
@@ -292,6 +302,23 @@ const CategoryManagement = () => {
                       min="0"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.allows_free_ads}
+                      onChange={(e) => setFormData(prev => ({ ...prev, allows_free_ads: e.target.checked }))}
+                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Allow free ad posting
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500 ml-6 mt-1">
+                    When unchecked, only subscribed users or those in trial can post in this category
+                  </p>
                 </div>
 
                 <div className="flex space-x-3 pt-4">

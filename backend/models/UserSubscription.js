@@ -1,4 +1,5 @@
 import { query, transaction } from '../config/database.js';
+import User from './User.js';
 
 export class UserSubscription {
   // Create user subscription
@@ -89,14 +90,14 @@ export class UserSubscription {
   // Check if user can post ads
   static async canPostAd(userId) {
     const subscription = await this.getCurrentSubscription(userId);
-    
+
     if (!subscription) {
       // Free plan - check ad count
       const adCountResult = await query(
         'SELECT COUNT(*) FROM ads WHERE user_id = $1 AND status IN ($2, $3)',
         [userId, 'active', 'pending']
       );
-      
+
       const adCount = parseInt(adCountResult.rows[0].count);
       return { canPost: adCount < 5, remaining: Math.max(0, 5 - adCount), plan: 'free' };
     }
@@ -106,14 +107,70 @@ export class UserSubscription {
       'SELECT COUNT(*) FROM ads WHERE user_id = $1 AND status IN ($2, $3)',
       [userId, 'active', 'pending']
     );
-    
+
     const adCount = parseInt(adCountResult.rows[0].count);
     const remaining = subscription.ad_limit === -1 ? -1 : Math.max(0, subscription.ad_limit - adCount);
-    
-    return { 
-      canPost: subscription.ad_limit === -1 || adCount < subscription.ad_limit, 
-      remaining, 
-      plan: subscription.plan_name 
+
+    return {
+      canPost: subscription.ad_limit === -1 || adCount < subscription.ad_limit,
+      remaining,
+      plan: subscription.plan_name
+    };
+  }
+
+  // Check if user can post in a specific category
+  static async canPostInCategory(userId, categoryId) {
+    const categoryResult = await query(
+      'SELECT allows_free_ads FROM categories WHERE id = $1',
+      [categoryId]
+    );
+
+    if (!categoryResult.rows[0]) {
+      throw new Error('Category not found');
+    }
+
+    const { allows_free_ads } = categoryResult.rows[0];
+
+    const subscription = await this.getCurrentSubscription(userId);
+    const inTrial = await User.isInTrialPeriod(userId);
+
+    if (allows_free_ads) {
+      return {
+        canPost: true,
+        requiresSubscription: false,
+        inTrial,
+        hasSubscription: !!subscription,
+        message: 'Free posting allowed in this category'
+      };
+    }
+
+    if (subscription) {
+      return {
+        canPost: true,
+        requiresSubscription: false,
+        inTrial: false,
+        hasSubscription: true,
+        subscriptionName: subscription.plan_name,
+        message: 'You have an active subscription'
+      };
+    }
+
+    if (inTrial) {
+      return {
+        canPost: true,
+        requiresSubscription: false,
+        inTrial: true,
+        hasSubscription: false,
+        message: 'Posting allowed during trial period'
+      };
+    }
+
+    return {
+      canPost: false,
+      requiresSubscription: true,
+      inTrial: false,
+      hasSubscription: false,
+      message: 'This category requires a subscription. Free trial has expired.'
     };
   }
 }
