@@ -13,17 +13,10 @@ import {
   Calendar,
   User,
   Building,
-  Lock,
-  CheckCircle,
-  Clock,
 } from "lucide-react";
 import { useGetCategoriesQuery } from "../../redux/api/categoriesApi";
 import { useCreateAdMutation } from "../../redux/api/adsApi";
 import { useGetCategoryAttributesQuery } from "../../redux/api/categoryAttributesApi";
-import {
-  useCheckCanPostInCategoryQuery,
-  useGetSubscriptionPlansQuery,
-} from "../../redux/api/subscriptionsApi";
 import { addNotification } from "../../redux/slices/uiSlice";
 import LocationSelector from "../../components/common/LocationSelector";
 import DynamicFormBuilder from "../../components/common/DynamicFormBuilder";
@@ -34,7 +27,6 @@ const CreateAd = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedImages, setSelectedImages] = useState([]);
   const [dynamicAttributes, setDynamicAttributes] = useState({});
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,6 +39,7 @@ const CreateAd = () => {
     condition: "used",
     is_negotiable: true,
     contact_phone: "",
+    // Job-specific fields
     job_type: "",
     salary_range: "",
     experience_level: "",
@@ -58,7 +51,6 @@ const CreateAd = () => {
   const { data: categories, isLoading: categoriesLoading } =
     useGetCategoriesQuery();
   const [createAd, { isLoading: createLoading }] = useCreateAdMutation();
-  const { data: subscriptionPlans } = useGetSubscriptionPlansQuery();
 
   const selectedCategory = categories?.data?.find(
     (cat) => cat.id === parseInt(formData.category_id)
@@ -72,13 +64,7 @@ const CreateAd = () => {
       skip: !activeCategoryId,
     });
 
-  const { data: eligibilityData, isLoading: eligibilityLoading } =
-    useCheckCanPostInCategoryQuery(activeCategoryId, {
-      skip: !activeCategoryId,
-    });
-
   const categoryAttributes = attributesData?.data || [];
-  const eligibility = eligibilityData?.data;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -285,77 +271,6 @@ const CreateAd = () => {
                   </div>
                 )}
 
-              {/* Eligibility and Subscription Info */}
-              {activeCategoryId && eligibility && (
-                <div>
-                  {!eligibility.canPost && eligibility.requiresSubscription && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <div className="flex items-start">
-                        <Lock className="text-yellow-600 mr-3 mt-1" size={20} />
-                        <div>
-                          <h4 className="font-medium text-yellow-900 mb-1">
-                            Subscription Required
-                          </h4>
-                          <p className="text-sm text-yellow-800 mb-3">
-                            {eligibility.message}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setShowSubscriptionModal(true)}
-                            className="text-sm bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
-                          >
-                            View Subscription Plans
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {eligibility.inTrial && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-start">
-                        <Clock className="text-blue-600 mr-3 mt-1" size={20} />
-                        <div>
-                          <h4 className="font-medium text-blue-900 mb-1">
-                            Free Trial Active
-                          </h4>
-                          <p className="text-sm text-blue-800">
-                            You can post in this category during your 14-day trial period.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {eligibility.canPost && !eligibility.requiresSubscription && !eligibility.inTrial && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-start">
-                        <CheckCircle className="text-green-600 mr-3 mt-1" size={20} />
-                        <div>
-                          <h4 className="font-medium text-green-900 mb-1">
-                            Ready to Post
-                          </h4>
-                          <p className="text-sm text-green-800 mb-3">
-                            {eligibility.hasSubscription
-                              ? `Active subscription: ${eligibility.subscriptionName}`
-                              : eligibility.message}
-                          </p>
-                          {subscriptionPlans?.data?.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setShowSubscriptionModal(true)}
-                              className="text-sm text-green-700 underline hover:text-green-800"
-                            >
-                              View subscription plans to boost visibility
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Title *
@@ -503,10 +418,7 @@ const CreateAd = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={
-                    !canProceedToStep2 ||
-                    (eligibility && !eligibility.canPost)
-                  }
+                  disabled={!canProceedToStep2}
                   className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next: Pricing & Location
@@ -765,99 +677,6 @@ const CreateAd = () => {
             </div>
           )}
         </form>
-
-        {/* Subscription Plans Modal */}
-        {showSubscriptionModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Subscription Plans
-                  </h2>
-                  <button
-                    onClick={() => setShowSubscriptionModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <p className="text-gray-600 mb-6">
-                  Choose a plan to unlock premium features and boost your ad visibility
-                </p>
-
-                {subscriptionPlans?.data && subscriptionPlans.data.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {subscriptionPlans.data.map((plan) => (
-                      <div
-                        key={plan.id}
-                        className="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors"
-                      >
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          {plan.name}
-                        </h3>
-                        <div className="text-3xl font-bold text-green-600 mb-4">
-                          ${plan.price}
-                          <span className="text-sm text-gray-600 font-normal">
-                            /{plan.duration}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 mb-4">{plan.description}</p>
-                        <ul className="space-y-2 mb-6">
-                          {plan.features && plan.features.length > 0 ? (
-                            plan.features.map((feature, index) => (
-                              <li key={index} className="flex items-start">
-                                <CheckCircle
-                                  className="text-green-600 mr-2 mt-0.5 flex-shrink-0"
-                                  size={16}
-                                />
-                                <span className="text-sm text-gray-700">{feature}</span>
-                              </li>
-                            ))
-                          ) : (
-                            <li className="flex items-start">
-                              <CheckCircle
-                                className="text-green-600 mr-2 mt-0.5 flex-shrink-0"
-                                size={16}
-                              />
-                              <span className="text-sm text-gray-700">
-                                {plan.ad_limit === -1
-                                  ? "Unlimited ads"
-                                  : `Post up to ${plan.ad_limit} ads`}
-                              </span>
-                            </li>
-                          )}
-                        </ul>
-                        <button
-                          onClick={() => {
-                            navigate("/settings?tab=subscription");
-                          }}
-                          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          Choose Plan
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-600 py-8">
-                    No subscription plans available at the moment.
-                  </p>
-                )}
-
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={() => setShowSubscriptionModal(false)}
-                    className="text-gray-600 hover:text-gray-800 underline"
-                  >
-                    Continue without subscription
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

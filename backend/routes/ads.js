@@ -1,6 +1,5 @@
 import express from "express";
 import Ad from "../models/Ad.js";
-import UserSubscription from "../models/UserSubscription.js";
 import { protect, optionalAuth, checkOwnership } from "../middleware/auth.js";
 import { uploadMultiple } from "../middleware/upload.js";
 import { uploadMultipleImages } from "../config/cloudinary.js";
@@ -213,21 +212,6 @@ router.post(
         // Dynamic attributes
         attributes,
       } = req.body;
-
-      // Check if user can post in this category
-      const activeCategoryId = subcategory_id || category_id;
-      const eligibility = await UserSubscription.canPostInCategory(
-        req.user.id,
-        activeCategoryId
-      );
-
-      if (!eligibility.canPost) {
-        return res.status(403).json({
-          success: false,
-          message: eligibility.message,
-          requiresSubscription: true
-        });
-      }
 
       let images = [];
 

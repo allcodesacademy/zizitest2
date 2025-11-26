@@ -86,9 +86,6 @@ router.post("/register", validateRegister, async (req, res) => {
       phone,
     });
 
-    // Start trial period for new user
-    await User.startTrialPeriod(user.id);
-
     sendTokenResponse(user, 201, res);
   } catch (error) {
     console.error("Register error:", error);
@@ -178,12 +175,9 @@ router.post("/google", async (req, res) => {
           email,
           google_id: googleId,
           avatar_url: picture,
-          phone: "",
-          location: "",
+          phone: "", // Will be updated later
+          location: "", // Will be updated later
         });
-
-        // Start trial period for new user
-        await User.startTrialPeriod(user.id);
       }
     }
 

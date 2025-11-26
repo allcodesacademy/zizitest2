@@ -45,10 +45,6 @@ export const subscriptionsApi = createApi({
       query: () => "/can-post",
       providesTags: ["UserSubscription"],
     }),
-    checkCanPostInCategory: builder.query({
-      query: (categoryId) => `/can-post-in-category/${categoryId}`,
-      providesTags: ["UserSubscription"],
-    }),
     // Admin endpoints
     getAdminPlans: builder.query({
       query: () => "/admin/plans",
@@ -86,7 +82,6 @@ export const {
   useSubscribeMutation,
   useCancelSubscriptionMutation,
   useCheckCanPostQuery,
-  useCheckCanPostInCategoryQuery,
   useGetAdminPlansQuery,
   useCreatePlanMutation,
   useUpdatePlanMutation,

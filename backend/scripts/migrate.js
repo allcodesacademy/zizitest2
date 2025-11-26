@@ -32,7 +32,6 @@ const migrations = [
     icon VARCHAR(50),
     sort_order INTEGER DEFAULT 0,
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
-    allows_free_ads BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`,
@@ -358,8 +357,6 @@ const migrations = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_date TIMESTAMP`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_type VARCHAR(50)`,
-  `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP`,
-  `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMP`,
 
   // Create indexes for new tables
   `CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON user_subscriptions(user_id)`,

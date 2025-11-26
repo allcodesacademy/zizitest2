@@ -176,8 +176,8 @@ router.get('/:id/hierarchy', validateId, async (req, res) => {
 // @access  Private/Admin
 router.post('/', protect, admin, validateCreateCategory, async (req, res) => {
   try {
-    const { name, description, parent_id, icon, allows_free_ads } = req.body;
-
+    const { name, description, parent_id, icon } = req.body;
+    
     // Generate slug from name
     const slug = name.toLowerCase()
       .replace(/[^a-z0-9 -]/g, '')
@@ -189,8 +189,7 @@ router.post('/', protect, admin, validateCreateCategory, async (req, res) => {
       description,
       parent_id,
       icon,
-      slug,
-      allows_free_ads: allows_free_ads !== undefined ? allows_free_ads : true
+      slug
     });
 
     res.status(201).json({
@@ -211,8 +210,8 @@ router.post('/', protect, admin, validateCreateCategory, async (req, res) => {
 // @access  Private/Admin
 router.put('/:id', protect, admin, validateId, async (req, res) => {
   try {
-    const { name, description, parent_id, icon, status, sort_order, allows_free_ads } = req.body;
-
+    const { name, description, parent_id, icon, status, sort_order } = req.body;
+    
     const updateData = {};
     if (name !== undefined) {
       updateData.name = name;
@@ -226,10 +225,9 @@ router.put('/:id', protect, admin, validateId, async (req, res) => {
     if (icon !== undefined) updateData.icon = icon;
     if (status !== undefined) updateData.status = status;
     if (sort_order !== undefined) updateData.sort_order = sort_order;
-    if (allows_free_ads !== undefined) updateData.allows_free_ads = allows_free_ads;
 
     const category = await Category.update(req.params.id, updateData);
-
+    
     if (!category) {
       return res.status(404).json({
         success: false,
